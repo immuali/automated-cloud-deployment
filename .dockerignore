@@ -1,0 +1,12 @@
+.venv
+.git
+.github
+.vscode
+__pycache__
+.pytest_cache
+*.pyc
+*.pyo
+*.log
+.env
+terraform
+documentation
