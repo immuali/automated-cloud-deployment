@@ -12,13 +12,16 @@ __pycache__/
 .env.*
 !.env.example
 
-# Terraform files
+# Terraform working files and state
 .terraform/
 *.tfstate
 *.tfstate.*
 *.tfplan
-terraform.tfvars
 crash.log
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+
 
 # VS Code settings
 .vscode/
