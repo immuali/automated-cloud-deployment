@@ -1,5 +1,7 @@
+import os
 from datetime import datetime, timezone
 
+import psycopg2
 from flask import Flask, jsonify, render_template
 
 
@@ -22,6 +24,36 @@ def health():
     ), 200
 
 
+@app.route("/database-health")
+def database_health():
+    try:
+        connection = psycopg2.connect(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", "5432"),
+            database=os.getenv("DB_NAME", "capstone_db"),
+            user=os.getenv("DB_USER", "capstone_user"),
+            password=os.getenv("DB_PASSWORD"),
+            connect_timeout=3
+        )
+
+        connection.close()
+
+        return jsonify(
+            {
+                "application": "healthy",
+                "database": "connected"
+            }
+        ), 200
+
+    except Exception:
+        return jsonify(
+            {
+                "application": "healthy",
+                "database": "unavailable"
+            }
+        ), 503
+
+
 @app.route("/about")
 def about():
     return jsonify(
@@ -31,6 +63,7 @@ def about():
             "technologies": [
                 "Flask",
                 "Docker",
+                "PostgreSQL",
                 "Terraform",
                 "GitHub Actions",
                 "AWS"
