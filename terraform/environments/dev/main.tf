@@ -31,3 +31,10 @@ module "database" {
   instance_class    = "db.t3.micro"
   allocated_storage = 20
 }
+
+module "ecr" {
+  source = "../../modules/ecr"
+
+  project_name = var.project_name
+  environment  = var.environment
+}
