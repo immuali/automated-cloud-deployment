@@ -97,7 +97,7 @@ resource "aws_ecs_task_definition" "app" {
 
       options = {
         awslogs-group         = aws_cloudwatch_log_group.app.name
-        awslogs-region = data.aws_region.current.region
+        awslogs-region        = data.aws_region.current.region
         awslogs-stream-prefix = "app"
       }
     }
@@ -127,5 +127,9 @@ resource "aws_ecs_service" "app" {
     target_group_arn = var.target_group_arn
     container_name   = "app"
     container_port   = 5000
+  }
+
+  lifecycle {
+    ignore_changes = [task_definition]
   }
 }
