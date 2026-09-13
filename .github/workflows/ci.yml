@@ -47,11 +47,43 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Lint Python code
+        run: |
+          python -m pip install ruff==0.11.13
+          python -m ruff check app --select E9,F63,F7,F82
+
       - name: Run tests
         run: python -m pytest app/tests -v
 
       - name: Build Docker image
         run: docker build -t capstone-app:ci .
+
+      - name: Set up Terraform
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.6"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        working-directory: terraform/environments/dev
+        run: |
+          terraform init -input=false -lockfile=readonly \
+            -backend-config="bucket=capstone-terraform-state-565265042363" \
+            -backend-config="key=dev/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="use_lockfile=true"
+
+      - name: Terraform validate
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        working-directory: terraform/environments/dev
+        run: terraform validate
+
+      - name: Terraform plan
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        working-directory: terraform/environments/dev
+        run: terraform plan -input=false -no-color -lock-timeout=5m
 
       - name: Login to Amazon ECR
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
