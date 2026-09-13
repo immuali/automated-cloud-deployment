@@ -38,3 +38,27 @@ module "ecr" {
   project_name = var.project_name
   environment  = var.environment
 }
+
+module "alb" {
+  source = "../../modules/alb"
+
+  environment           = var.environment
+  vpc_id                = module.network.vpc_id
+  public_subnet_ids     = module.network.public_subnet_ids
+  alb_security_group_id = module.security.alb_security_group_id
+}
+
+module "ecs" {
+  source = "../../modules/ecs"
+
+  environment            = var.environment
+  public_subnet_ids      = module.network.public_subnet_ids
+  ecs_security_group_id  = module.security.ecs_security_group_id
+  target_group_arn       = module.alb.target_group_arn
+  repository_url         = module.ecr.repository_url
+  database_endpoint      = module.database.database_endpoint
+  database_name          = module.database.database_name
+  master_user_secret_arn = module.database.master_user_secret_arn
+
+  depends_on = [module.alb]
+}
