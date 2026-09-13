@@ -34,12 +34,3 @@ resource "aws_lb_listener" "http" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
-
-module "alb" {
-  source = "../../modules/alb"
-
-  environment           = var.environment
-  vpc_id                = module.network.vpc_id
-  public_subnet_ids     = module.network.public_subnet_ids
-  alb_security_group_id = module.security.alb_security_group_id
-}
