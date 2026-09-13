@@ -117,6 +117,11 @@ resource "aws_ecs_service" "app" {
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
 
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   network_configuration {
     subnets          = var.public_subnet_ids
     security_groups  = [var.ecs_security_group_id]
