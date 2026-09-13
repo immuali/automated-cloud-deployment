@@ -14,7 +14,10 @@ permissions:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+    concurrency:
+      group: capstone-${{ github.ref }}
+      cancel-in-progress: false
 
     steps:
       - name: Checkout code
@@ -65,3 +68,33 @@ jobs:
           IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           docker tag capstone-app:ci "$IMAGE_URI"
           docker push "$IMAGE_URI"
+      - name: Download current ECS task definition
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          TASK_DEFINITION=$(aws ecs describe-services \
+            --cluster dev-capstone-cluster \
+            --services dev-capstone-service \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          aws ecs describe-task-definition \
+            --task-definition "$TASK_DEFINITION" \
+            --query taskDefinition \
+            --output json > task-definition.json
+      - name: Update task definition image
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        id: render-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: app
+          image: ${{ steps.login-ecr.outputs.registry }}/automated-cloud-deployment-dev-app:${{ github.sha }}
+
+      - name: Deploy to Amazon ECS
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task.outputs.task-definition }}
+          service: dev-capstone-service
+          cluster: dev-capstone-cluster
+          wait-for-service-stability: true
