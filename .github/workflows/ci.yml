@@ -49,3 +49,19 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t capstone-app:ci .
+
+      - name: Login to Amazon ECR
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push Docker image to ECR
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: automated-cloud-deployment-dev-app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker tag capstone-app:ci "$IMAGE_URI"
+          docker push "$IMAGE_URI"
