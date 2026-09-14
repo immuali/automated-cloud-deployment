@@ -83,7 +83,12 @@ jobs:
       - name: Terraform plan
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         working-directory: terraform/environments/dev
-        run: terraform plan -input=false -no-color -lock-timeout=5m
+        run: terraform plan -input=false -no-color -lock-timeout=5m -out=tfplan
+
+      - name: Terraform apply
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        working-directory: terraform/environments/dev
+        run: terraform apply -input=false -no-color -lock-timeout=5m tfplan
 
       - name: Login to Amazon ECR
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
