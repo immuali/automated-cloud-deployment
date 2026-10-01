@@ -12,6 +12,43 @@ app = Flask(__name__)
 def home():
     return render_template("index.html")
 
+@app.route("/messages")
+def messages():
+    connection = None
+
+    try:
+        connection = psycopg2.connect(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", "5432"),
+            database=os.getenv("DB_NAME", "capstone_db"),
+            user=os.getenv("DB_USER", "capstone_user"),
+            password=os.getenv("DB_PASSWORD"),
+            connect_timeout=3
+        )
+
+        cursor = connection.cursor()
+        cursor.execute(
+            "SELECT id, message FROM demo_messages ORDER BY id;"
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+
+        messages_list = [
+            {"id": row[0], "message": row[1]}
+            for row in rows
+        ]
+
+        return jsonify(messages_list), 200
+
+    except Exception:
+        return jsonify(
+            {"error": "Unable to read messages from database"}
+        ), 503
+
+    finally:
+        if connection is not None:
+            connection.close()
+
 
 @app.route("/health")
 def health():
